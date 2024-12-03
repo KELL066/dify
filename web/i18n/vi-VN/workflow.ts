@@ -99,6 +99,8 @@ const translation = {
     fileUploadTip: 'Các tính năng tải lên hình ảnh đã được nâng cấp để tải tệp lên.',
     featuresDescription: 'Nâng cao trải nghiệm người dùng ứng dụng web',
     ImageUploadLegacyTip: 'Bây giờ bạn có thể tạo các biến loại tệp trong biểu mẫu bắt đầu. Chúng tôi sẽ không còn hỗ trợ tính năng tải lên hình ảnh trong tương lai.',
+    importWarning: 'Thận trọng',
+    importWarningDetails: 'Sự khác biệt về phiên bản DSL có thể ảnh hưởng đến một số tính năng nhất định',
   },
   env: {
     envPanelTitle: 'Biến Môi Trường',
@@ -408,6 +410,10 @@ const translation = {
       binaryFileVariable: 'Biến tệp nhị phân',
       type: 'Kiểu',
       extractListPlaceholder: 'Nhập chỉ mục mục danh sách, nhập \'/\' chèn biến',
+      curl: {
+        title: 'Nhập từ cURL',
+        placeholder: 'Dán chuỗi cURL vào đây',
+      },
     },
     code: {
       inputVars: 'Biến đầu vào',
@@ -494,6 +500,26 @@ const translation = {
       'clear': 'Xóa',
       'setVariable': 'Đặt Biến',
       'variable': 'Biến',
+      'operations': {
+        '-=': '-=',
+        'over-write': 'Ghi đè lên',
+        'clear': 'Trong',
+        'append': 'Thêm',
+        'title': 'Hoạt động',
+        '*=': '*=',
+        '/=': '/=',
+        'extend': 'Mở rộng',
+        '+=': '+=',
+        'set': 'Cài',
+        'overwrite': 'Ghi đè lên',
+      },
+      'setParameter': 'Đặt tham số...',
+      'selectAssignedVariable': 'Chọn biến được gán...',
+      'noVarTip': 'Nhấp vào nút "+" để thêm biến',
+      'assignedVarsDescription': 'Các biến được gán phải là các biến có thể ghi, chẳng hạn như các biến hội thoại.',
+      'varNotSet': 'Biến KHÔNG được đặt',
+      'noAssignedVars': 'Không có biến được gán sẵn có',
+      'variables': 'Biến',
     },
     tool: {
       toAuthorize: 'Ủy quyền',
@@ -624,6 +650,13 @@ const translation = {
   },
   tracing: {
     stopBy: 'Dừng bởi {{user}}',
+  },
+  variableReference: {
+    noAssignedVars: 'Không có biến được gán sẵn có',
+    noAvailableVars: 'Không có biến khả dụng',
+    assignedVarsDescription: 'Các biến được gán phải là các biến có thể ghi, chẳng hạn như',
+    conversationVars: 'Biến cuộc trò chuyện',
+    noVarsForOperation: 'Không có biến nào có sẵn để gán với hoạt động đã chọn.',
   },
 }
 

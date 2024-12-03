@@ -2,7 +2,7 @@ import logging
 import uuid
 from collections.abc import Generator, Mapping, Sequence
 from concurrent.futures import Future, wait
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from queue import Empty, Queue
 from typing import TYPE_CHECKING, Any, Optional, cast
 
@@ -116,7 +116,7 @@ class IterationNode(BaseNode[IterationNodeData]):
         variable_pool.add([self.node_id, "item"], iterator_list_value[0])
 
         # init graph engine
-        from core.workflow.graph_engine.graph_engine import GraphEngine, GraphEngineThreadPool
+        from core.workflow.graph_engine.graph_engine import GraphEngine
 
         graph_engine = GraphEngine(
             tenant_id=self.tenant_id,
@@ -135,7 +135,7 @@ class IterationNode(BaseNode[IterationNodeData]):
             thread_pool_id=self.thread_pool_id,
         )
 
-        start_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        start_at = datetime.now(UTC).replace(tzinfo=None)
 
         yield IterationRunStartedEvent(
             iteration_id=self.id,
@@ -162,7 +162,8 @@ class IterationNode(BaseNode[IterationNodeData]):
             if self.node_data.is_parallel:
                 futures: list[Future] = []
                 q = Queue()
-                thread_pool = GraphEngineThreadPool(max_workers=self.node_data.parallel_nums, max_submit_count=100)
+                thread_pool = graph_engine.workflow_thread_pool_mapping[graph_engine.thread_pool_id]
+                thread_pool._max_workers = self.node_data.parallel_nums
                 for index, item in enumerate(iterator_list_value):
                     future: Future = thread_pool.submit(
                         self._run_single_iter_parallel,
@@ -297,12 +298,13 @@ class IterationNode(BaseNode[IterationNodeData]):
             # variable selector to variable mapping
             try:
                 # Get node class
-                from core.workflow.nodes.node_mapping import node_type_classes_mapping
+                from core.workflow.nodes.node_mapping import NODE_TYPE_CLASSES_MAPPING
 
                 node_type = NodeType(sub_node_config.get("data", {}).get("type"))
-                node_cls = node_type_classes_mapping.get(node_type)
-                if not node_cls:
+                if node_type not in NODE_TYPE_CLASSES_MAPPING:
                     continue
+                node_version = sub_node_config.get("data", {}).get("version", "1")
+                node_cls = NODE_TYPE_CLASSES_MAPPING[node_type][node_version]
 
                 sub_node_variable_mapping = node_cls.extract_variable_selector_to_variable_mapping(
                     graph_config=graph_config, config=sub_node_config
@@ -367,7 +369,7 @@ class IterationNode(BaseNode[IterationNodeData]):
         """
         run single iteration
         """
-        iter_start_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        iter_start_at = datetime.now(UTC).replace(tzinfo=None)
 
         try:
             rst = graph_engine.run()
@@ -440,7 +442,7 @@ class IterationNode(BaseNode[IterationNodeData]):
                             variable_pool.add([self.node_id, "index"], next_index)
                             if next_index < len(iterator_list_value):
                                 variable_pool.add([self.node_id, "item"], iterator_list_value[next_index])
-                            duration = (datetime.now(timezone.utc).replace(tzinfo=None) - iter_start_at).total_seconds()
+                            duration = (datetime.now(UTC).replace(tzinfo=None) - iter_start_at).total_seconds()
                             iter_run_map[iteration_run_id] = duration
                             yield IterationRunNextEvent(
                                 iteration_id=self.id,
@@ -461,7 +463,7 @@ class IterationNode(BaseNode[IterationNodeData]):
 
                             if next_index < len(iterator_list_value):
                                 variable_pool.add([self.node_id, "item"], iterator_list_value[next_index])
-                            duration = (datetime.now(timezone.utc).replace(tzinfo=None) - iter_start_at).total_seconds()
+                            duration = (datetime.now(UTC).replace(tzinfo=None) - iter_start_at).total_seconds()
                             iter_run_map[iteration_run_id] = duration
                             yield IterationRunNextEvent(
                                 iteration_id=self.id,
@@ -503,7 +505,7 @@ class IterationNode(BaseNode[IterationNodeData]):
 
             if next_index < len(iterator_list_value):
                 variable_pool.add([self.node_id, "item"], iterator_list_value[next_index])
-            duration = (datetime.now(timezone.utc).replace(tzinfo=None) - iter_start_at).total_seconds()
+            duration = (datetime.now(UTC).replace(tzinfo=None) - iter_start_at).total_seconds()
             iter_run_map[iteration_run_id] = duration
             yield IterationRunNextEvent(
                 iteration_id=self.id,
