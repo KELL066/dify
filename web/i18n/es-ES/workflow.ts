@@ -99,6 +99,8 @@ const translation = {
     ImageUploadLegacyTip: 'Ahora puede crear variables de tipo de archivo en el formulario de inicio. Ya no admitiremos la función de carga de imágenes en el futuro.',
     featuresDescription: 'Mejorar la experiencia del usuario de la aplicación web',
     featuresDocLink: 'Aprende más',
+    importWarning: 'Cautela',
+    importWarningDetails: 'La diferencia de versión de DSL puede afectar a ciertas características',
   },
   env: {
     envPanelTitle: 'Variables de Entorno',
@@ -408,6 +410,10 @@ const translation = {
       type: 'Tipo',
       binaryFileVariable: 'Variable de archivo binario',
       extractListPlaceholder: 'Introduzca el índice de elementos de la lista, escriba \'/\' insertar variable',
+      curl: {
+        title: 'Importar desde cURL',
+        placeholder: 'Pegar la cadena cURL aquí',
+      },
     },
     code: {
       inputVars: 'Variables de entrada',
@@ -494,6 +500,26 @@ const translation = {
       'clear': 'Limpiar',
       'setVariable': 'Establecer Variable',
       'variable': 'Variable',
+      'operations': {
+        'clear': 'Claro',
+        '*=': '*=',
+        '-=': '-=',
+        'title': 'Operación',
+        'extend': 'Extender',
+        'append': 'Añadir',
+        '+=': '+=',
+        'over-write': 'Sobrescribir',
+        'overwrite': 'Sobrescribir',
+        '/=': '/=',
+        'set': 'Poner',
+      },
+      'variables': 'Variables',
+      'setParameter': 'Establecer parámetro...',
+      'noVarTip': 'Haga clic en el botón "+" para agregar variables',
+      'varNotSet': 'Variable NO establecida',
+      'noAssignedVars': 'No hay variables asignadas disponibles',
+      'selectAssignedVariable': 'Seleccione la variable asignada...',
+      'assignedVarsDescription': 'Las variables asignadas deben ser variables grabables, como las variables de conversación.',
     },
     tool: {
       toAuthorize: 'Para autorizar',
@@ -627,6 +653,13 @@ const translation = {
   },
   tracing: {
     stopBy: 'Pásate por {{usuario}}',
+  },
+  variableReference: {
+    noAvailableVars: 'No hay variables disponibles',
+    assignedVarsDescription: 'Las variables asignadas deben ser variables grabables, como',
+    noVarsForOperation: 'No hay variables disponibles para la asignación con la operación seleccionada.',
+    noAssignedVars: 'No hay variables asignadas disponibles',
+    conversationVars: 'Variables de conversación',
   },
 }
 

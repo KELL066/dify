@@ -99,6 +99,8 @@ const translation = {
     fileUploadTip: 'Resim yükleme özellikleri, dosya yüklemeye yükseltildi.',
     ImageUploadLegacyTip: 'Artık başlangıç formunda dosya türü değişkenleri oluşturabilirsiniz. Gelecekte resim yükleme özelliğini artık desteklemeyeceğiz.',
     featuresDescription: 'Web uygulaması kullanıcı deneyimini geliştirin',
+    importWarningDetails: 'DSL sürüm farkı bazı özellikleri etkileyebilir',
+    importWarning: 'Dikkat',
   },
   env: {
     envPanelTitle: 'Çevre Değişkenleri',
@@ -409,6 +411,10 @@ const translation = {
       type: 'Tür',
       binaryFileVariable: 'İkili Dosya Değişkeni',
       extractListPlaceholder: 'Liste öğesi dizinini girin, \'/\' yazın değişken ekle',
+      curl: {
+        placeholder: 'cURL dizesini buraya yapıştırın',
+        title: 'cURL\'den içe aktar',
+      },
     },
     code: {
       inputVars: 'Giriş Değişkenleri',
@@ -495,6 +501,26 @@ const translation = {
       'clear': 'Temizle',
       'setVariable': 'Değişken Ayarla',
       'variable': 'Değişken',
+      'operations': {
+        'extend': 'Uzatmak',
+        'overwrite': 'Üzerine',
+        'over-write': 'Üzerine',
+        'title': 'İşlem',
+        '+=': '+=',
+        'clear': 'Berrak',
+        'append': 'Ekleme',
+        '/=': '/=',
+        '-=': '-=',
+        '*=': '*=',
+        'set': 'Ayarlamak',
+      },
+      'variables': 'Değişken',
+      'selectAssignedVariable': 'Atanan değişkeni seçin...',
+      'setParameter': 'Parametreyi ayarla...',
+      'varNotSet': 'Değişken NOT Set',
+      'assignedVarsDescription': 'Atanan değişkenler, konuşma değişkenleri gibi yazılabilir değişkenler olmalıdır.',
+      'noVarTip': 'Değişken eklemek için "+" düğmesini tıklayın',
+      'noAssignedVars': 'Kullanılabilir atanmış değişken yok',
     },
     tool: {
       toAuthorize: 'Yetkilendirmek için',
@@ -625,6 +651,13 @@ const translation = {
   },
   tracing: {
     stopBy: '{{user}} tarafından durduruldu',
+  },
+  variableReference: {
+    assignedVarsDescription: 'Atanan değişkenler, örneğin yazılabilir değişkenler olmalıdır',
+    noAvailableVars: 'Kullanılabilir değişken yok',
+    conversationVars: 'Konuşma değişkenleri',
+    noVarsForOperation: 'Seçilen işlemle atanabilecek değişken yok.',
+    noAssignedVars: 'Kullanılabilir atanmış değişken yok',
   },
 }
 

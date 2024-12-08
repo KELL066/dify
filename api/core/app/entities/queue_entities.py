@@ -1,8 +1,8 @@
 from datetime import datetime
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any, Optional
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 
 from core.model_runtime.entities.llm_entities import LLMResult, LLMResultChunk
 from core.workflow.entities.node_entities import NodeRunMetadataKey
@@ -11,7 +11,7 @@ from core.workflow.nodes import NodeType
 from core.workflow.nodes.base import BaseNodeData
 
 
-class QueueEvent(str, Enum):
+class QueueEvent(StrEnum):
     """
     QueueEvent enum
     """
@@ -112,18 +112,6 @@ class QueueIterationNextEvent(AppQueueEvent):
     node_run_index: int
     output: Optional[Any] = None  # output for the current iteration
     duration: Optional[float] = None
-
-    @field_validator("output", mode="before")
-    @classmethod
-    def set_output(cls, v):
-        """
-        Set output
-        """
-        if v is None:
-            return None
-        if isinstance(v, int | float | str | bool | dict | list):
-            return v
-        raise ValueError("output must be a valid type")
 
 
 class QueueIterationCompletedEvent(AppQueueEvent):
