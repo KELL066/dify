@@ -943,6 +943,9 @@ class OpenAILargeLanguageModel(_CommonOpenAI, LargeLanguageModel):
                 }
         elif isinstance(message, SystemPromptMessage):
             message = cast(SystemPromptMessage, message)
+            if isinstance(message.content, list):
+                text_contents = filter(lambda c: isinstance(c, TextPromptMessageContent), message.content)
+                message.content = "".join(c.data for c in text_contents)
             message_dict = {"role": "system", "content": message.content}
         elif isinstance(message, ToolPromptMessage):
             message = cast(ToolPromptMessage, message)
@@ -1130,8 +1133,8 @@ class OpenAILargeLanguageModel(_CommonOpenAI, LargeLanguageModel):
         base_model_schema = model_map[base_model]
 
         base_model_schema_features = base_model_schema.features or []
-        base_model_schema_model_properties = base_model_schema.model_properties or {}
-        base_model_schema_parameters_rules = base_model_schema.parameter_rules or []
+        base_model_schema_model_properties = base_model_schema.model_properties
+        base_model_schema_parameters_rules = base_model_schema.parameter_rules
 
         entity = AIModelEntity(
             model=model,
