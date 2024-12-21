@@ -1,17 +1,14 @@
 import csv
 import io
 import json
+import logging
+import os
+import tempfile
 
 import docx
 import pandas as pd
-import pypdfium2
-import yaml
-from unstructured.partition.api import partition_via_api
-from unstructured.partition.email import partition_email
-from unstructured.partition.epub import partition_epub
-from unstructured.partition.msg import partition_msg
-from unstructured.partition.ppt import partition_ppt
-from unstructured.partition.pptx import partition_pptx
+import pypdfium2  # type: ignore
+import yaml  # type: ignore
 
 from configs import dify_config
 from core.file import File, FileTransferMethod, file_manager
@@ -25,6 +22,8 @@ from models.workflow import WorkflowNodeExecutionStatus
 
 from .entities import DocumentExtractorNodeData
 from .exc import DocumentExtractorError, FileDownloadError, TextExtractionError, UnsupportedFileTypeError
+
+logger = logging.getLogger(__name__)
 
 
 class DocumentExtractorNode(BaseNode[DocumentExtractorNodeData]):
@@ -113,7 +112,7 @@ def _extract_text_by_mime_type(*, file_content: bytes, mime_type: str) -> str:
 def _extract_text_by_file_extension(*, file_content: bytes, file_extension: str) -> str:
     """Extract text from a file based on its file extension."""
     match file_extension:
-        case ".txt" | ".markdown" | ".md" | ".html" | ".htm" | ".xml":
+        case ".txt" | ".markdown" | ".md" | ".html" | ".htm" | ".xml" | ".vtt":
             return _extract_text_from_plain_text(file_content)
         case ".json":
             return _extract_text_from_json(file_content)
@@ -181,10 +180,43 @@ def _extract_text_from_pdf(file_content: bytes) -> str:
 
 
 def _extract_text_from_doc(file_content: bytes) -> str:
+    """
+    Extract text from a DOC/DOCX file.
+    For now support only paragraph and table add more if needed
+    """
     try:
         doc_file = io.BytesIO(file_content)
         doc = docx.Document(doc_file)
-        return "\n".join([paragraph.text for paragraph in doc.paragraphs])
+        text = []
+        # Process paragraphs
+        for paragraph in doc.paragraphs:
+            if paragraph.text.strip():
+                text.append(paragraph.text)
+
+        # Process tables
+        for table in doc.tables:
+            # Table header
+            try:
+                # table maybe cause errors so ignore it.
+                if len(table.rows) > 0 and table.rows[0].cells is not None:
+                    # Check if any cell in the table has text
+                    has_content = False
+                    for row in table.rows:
+                        if any(cell.text.strip() for cell in row.cells):
+                            has_content = True
+                            break
+
+                    if has_content:
+                        markdown_table = "| " + " | ".join(cell.text for cell in table.rows[0].cells) + " |\n"
+                        markdown_table += "| " + " | ".join(["---"] * len(table.rows[0].cells)) + " |\n"
+                        for row in table.rows[1:]:
+                            markdown_table += "| " + " | ".join(cell.text for cell in row.cells) + " |\n"
+                        text.append(markdown_table)
+            except Exception as e:
+                logger.warning(f"Failed to extract table from DOC/DOCX: {e}")
+                continue
+
+        return "\n".join(text)
     except Exception as e:
         raise TextExtractionError(f"Failed to extract text from DOC/DOCX: {str(e)}") from e
 
@@ -237,21 +269,25 @@ def _extract_text_from_csv(file_content: bytes) -> str:
 
 def _extract_text_from_excel(file_content: bytes) -> str:
     """Extract text from an Excel file using pandas."""
-
     try:
-        df = pd.read_excel(io.BytesIO(file_content))
-
-        # Drop rows where all elements are NaN
-        df.dropna(how="all", inplace=True)
-
-        # Convert DataFrame to Markdown table
-        markdown_table = df.to_markdown(index=False)
+        excel_file = pd.ExcelFile(io.BytesIO(file_content))
+        markdown_table = ""
+        for sheet_name in excel_file.sheet_names:
+            try:
+                df = excel_file.parse(sheet_name=sheet_name)
+                df.dropna(how="all", inplace=True)
+                # Create Markdown table two times to separate tables with a newline
+                markdown_table += df.to_markdown(index=False) + "\n\n"
+            except Exception as e:
+                continue
         return markdown_table
     except Exception as e:
         raise TextExtractionError(f"Failed to extract text from Excel file: {str(e)}") from e
 
 
 def _extract_text_from_ppt(file_content: bytes) -> str:
+    from unstructured.partition.ppt import partition_ppt
+
     try:
         with io.BytesIO(file_content) as file:
             elements = partition_ppt(file=file)
@@ -261,15 +297,24 @@ def _extract_text_from_ppt(file_content: bytes) -> str:
 
 
 def _extract_text_from_pptx(file_content: bytes) -> str:
+    from unstructured.partition.api import partition_via_api
+    from unstructured.partition.pptx import partition_pptx
+
     try:
-        with io.BytesIO(file_content) as file:
-            if dify_config.UNSTRUCTURED_API_URL and dify_config.UNSTRUCTURED_API_KEY:
-                elements = partition_via_api(
-                    file=file,
-                    api_url=dify_config.UNSTRUCTURED_API_URL,
-                    api_key=dify_config.UNSTRUCTURED_API_KEY,
-                )
-            else:
+        if dify_config.UNSTRUCTURED_API_URL and dify_config.UNSTRUCTURED_API_KEY:
+            with tempfile.NamedTemporaryFile(suffix=".pptx", delete=False) as temp_file:
+                temp_file.write(file_content)
+                temp_file.flush()
+                with open(temp_file.name, "rb") as file:
+                    elements = partition_via_api(
+                        file=file,
+                        metadata_filename=temp_file.name,
+                        api_url=dify_config.UNSTRUCTURED_API_URL,
+                        api_key=dify_config.UNSTRUCTURED_API_KEY,
+                    )
+                os.unlink(temp_file.name)
+        else:
+            with io.BytesIO(file_content) as file:
                 elements = partition_pptx(file=file)
         return "\n".join([getattr(element, "text", "") for element in elements])
     except Exception as e:
@@ -277,6 +322,8 @@ def _extract_text_from_pptx(file_content: bytes) -> str:
 
 
 def _extract_text_from_epub(file_content: bytes) -> str:
+    from unstructured.partition.epub import partition_epub
+
     try:
         with io.BytesIO(file_content) as file:
             elements = partition_epub(file=file)
@@ -286,6 +333,8 @@ def _extract_text_from_epub(file_content: bytes) -> str:
 
 
 def _extract_text_from_eml(file_content: bytes) -> str:
+    from unstructured.partition.email import partition_email
+
     try:
         with io.BytesIO(file_content) as file:
             elements = partition_email(file=file)
@@ -295,6 +344,8 @@ def _extract_text_from_eml(file_content: bytes) -> str:
 
 
 def _extract_text_from_msg(file_content: bytes) -> str:
+    from unstructured.partition.msg import partition_msg
+
     try:
         with io.BytesIO(file_content) as file:
             elements = partition_msg(file=file)

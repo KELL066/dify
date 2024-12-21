@@ -179,6 +179,15 @@ class ParameterExtractorNode(LLMNode):
                 error=str(e),
                 metadata={},
             )
+        except Exception as e:
+            return NodeRunResult(
+                status=WorkflowNodeExecutionStatus.FAILED,
+                inputs=inputs,
+                process_data=process_data,
+                outputs={"__is_success": 0, "__reason": "Failed to invoke model", "__error": str(e)},
+                error=str(e),
+                metadata={},
+            )
 
         error = None
 
@@ -235,7 +244,7 @@ class ParameterExtractorNode(LLMNode):
             raise InvalidInvokeResultError(f"Invalid invoke result: {invoke_result}")
 
         text = invoke_result.message.content
-        if not isinstance(text, str):
+        if not isinstance(text, str | None):
             raise InvalidTextContentTypeError(f"Invalid text content type: {type(text)}. Expected str.")
 
         usage = invoke_result.usage
